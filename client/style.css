@@ -1,6 +1,6 @@
 body {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     height: 100vh;
     margin: 0;
@@ -8,7 +8,7 @@ body {
     background-color: #f0f0f0;
 }
 
-#nameInputContainer, #waitingMessageContainer {
+#nameInputContainer, #waitingMessageContainer, #gameContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -16,6 +16,7 @@ body {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-top: 20px;
 }
 
 #nameInput {
@@ -49,4 +50,71 @@ body {
 #ellipsis::after {
     animation: ellipsis 1.5s infinite;
     content: '.';
+}
+
+#gameContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#playerHandContainer, #tableContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#table {
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    margin: 20px 0;
+}
+
+#playerHand {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 80%;
+    margin: 20px 0;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+li {
+    margin: 5px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    text-align: center;
+    position: relative;
+    width: 60px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+li:hover {
+    background-color: #e0e0e0;
+    cursor: pointer;
+}
+
+.card-number {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.card-value {
+    font-size: 12px;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
 }

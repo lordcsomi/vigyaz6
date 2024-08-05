@@ -22,7 +22,8 @@ class CardGenerator {
             let value = 1;
             if (i % 10 === 5) value += 1;
             if (i % 10 === 0) value += 2;
-            if (i % 11 === 0) value += 5;
+            if (i % 11 === 0) value += 4;
+            if (i === 55) value = 7;
             cards.push({ card: i, value });
         }
         return cards;
@@ -94,7 +95,11 @@ function startGame() {
     const hands = CardGenerator.dealCards(cards, numPlayers, cardsPerPlayer);
     const numRows = 4;
     const table = CardGenerator.setupTable(cards, numRows);
-    io.emit('gameStart', { hands, table });
+
+    players.forEach((player, index) => {
+        io.to(player.id).emit('gameStart', { hand: hands[index], table, players });
+    });
+
     gameStarted = true;
 }
 

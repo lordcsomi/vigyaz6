@@ -15,6 +15,16 @@
         <p id="waitingMessage">Waiting for other players<span id="ellipsis">.</span></p>
         <p id="playerCount"></p>
     </div>
+    <div id="gameContainer" style="display:none;">
+        <div id="tableContainer">
+            <h2>Table</h2>
+            <ul id="table"></ul>
+        </div>
+        <div id="playerHandContainer">
+            <h2>Your Hand</h2>
+            <ul id="playerHand"></ul>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
