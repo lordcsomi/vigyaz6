@@ -59,7 +59,7 @@ class CardGenerator {
     }
 }
 
-const numPlayers = 4;
+const numPlayers = 2;
 const cardsPerPlayer = 10;
 let players = [];
 let gameStarted = false;

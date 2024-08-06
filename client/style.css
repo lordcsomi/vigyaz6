@@ -12,6 +12,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     background-color: white;
     padding: 20px;
     border-radius: 10px;
@@ -67,8 +68,9 @@ body {
 }
 
 #table {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-gap: 5px; /* Set the gap between columns to 5px */
     width: 80%;
     margin: 20px 0;
 }
@@ -102,7 +104,7 @@ li {
     justify-content: center;
 }
 
-li:hover {
+#playerHand li:hover {
     background-color: #e0e0e0;
     cursor: pointer;
 }
@@ -117,4 +119,22 @@ li:hover {
     position: absolute;
     bottom: 5px;
     right: 5px;
+}
+
+.shadow-card {
+    border: 1px dashed #ccc;
+    background-color: #fff;
+}
+
+.red-outline {
+    border: 2px solid red;
+}
+
+#table li {
+    pointer-events: none; /* Make table cells non-hoverable */
+}
+
+.selected-card {
+    border: 2px solid yellow;
+    background-color: #e0e0e0;
 }

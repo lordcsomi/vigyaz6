@@ -38,6 +38,9 @@ function displayHand(hand) {
     hand.forEach(card => {
         const cardElement = document.createElement('li');
         cardElement.innerHTML = `<div class="card-number">${card.card}</div><div class="card-value">${card.value}</div>`;
+        cardElement.addEventListener('click', () => {
+            selectCard(cardElement, card);
+        });
         handContainer.appendChild(cardElement);
     });
 }
@@ -45,9 +48,59 @@ function displayHand(hand) {
 function displayTable(table) {
     const tableContainer = document.getElementById('table');
     tableContainer.innerHTML = '';
-    table.forEach((row, index) => {
-        const rowElement = document.createElement('li');
-        rowElement.innerHTML = `<div class="card-number">${row[0].card}</div><div class="card-value">${row[0].value}</div>`;
-        tableContainer.appendChild(rowElement);
+    for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 6; j++) {
+            const cellElement = document.createElement('li');
+            if (j === 5) {
+                cellElement.classList.add('red-outline');
+                cellElement.classList.add('shadow-card');
+            } else if (j > 0) {
+                cellElement.classList.add('shadow-card');
+            }
+            if (j === 0 && table[i]) {
+                cellElement.innerHTML = `<div class="card-number">${table[i][0].card}</div><div class="card-value">${table[i][0].value}</div>`;
+            }
+            tableContainer.appendChild(cellElement);
+        }
+    }
+}
+
+let selectedCardElement = null;
+
+function selectCard(cardElement, card) {
+    if (selectedCardElement) {
+        return; // A card is already selected, do nothing
+    }
+    selectedCardElement = cardElement;
+    cardElement.classList.add('selected-card');
+    disableOtherCards(cardElement);
+    socket.emit('cardSelected', card);
+}
+
+function disableOtherCards(selectedCardElement) {
+    const handContainer = document.getElementById('playerHand');
+    const cards = handContainer.querySelectorAll('li');
+    cards.forEach(card => {
+        if (card !== selectedCardElement) {
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.5';
+        }
     });
+}
+
+socket.on('new_card_can_be_selected', () => {
+    enableAllCards();
+});
+
+function enableAllCards() {
+    const handContainer = document.getElementById('playerHand');
+    const cards = handContainer.querySelectorAll('li');
+    cards.forEach(card => {
+        card.style.pointerEvents = 'auto';
+        card.style.opacity = '1';
+    });
+    if (selectedCardElement) {
+        selectedCardElement.classList.remove('selected-card');
+        selectedCardElement = null;
+    }
 }
