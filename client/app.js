@@ -1,6 +1,10 @@
 const socket = io();
 let selectedCardElement = null;
+let selectedCardCard = null;    
 let dTable = []
+let click_on = null
+let myhand = []
+let chooseRow = false
 
 
 document.getElementById('submitNameButton').addEventListener('click', () => {
@@ -37,12 +41,55 @@ socket.on('playerUpdate', (players) => {
 socket.on('gameStart', ({ hand, table, players }) => {
     document.getElementById('waitingMessageContainer').style.display = 'none';
     document.getElementById('gameContainer').style.display = 'block';
-    displayHand(hand);
+    hand.sort((a, b) => a.card - b.card);
+    myhand = hand
+    displayHand(myhand);
     displayTable(table);
 });
 
 socket.on('new_card_can_be_selected', () => {
+    console.log('New card can be selected');
+    console.log('selected card to be removed', selectedCardCard);
+    myhand = myhand.filter(card => card !== selectedCardCard);
     enableAllCards();
+    displayHand(myhand);
+});
+
+socket.on('placeCard', (table, row, column) => {
+    console.log('placeCard at row', row, 'column', column);
+    const selectedCell = dTable[row][column];
+    click_on = selectedCell
+    selectedCell.classList.add('yellow-outline');
+});
+
+socket.on('updateTable', (table) => {
+    console.log('Updating table:', table);
+    displayTable(table);
+});
+
+socket.on('chooseRow', () => {
+    console.log('Choose a row');
+    alert('Choose a row');
+    chooseRow = true
+});
+
+socket.on('gameOver', (players) => {
+    console.log('Game over, players:', players);
+    document.body.innerHTML = '<div id="leaderboard">Leaderboard</div>';
+    const leaderboard = document.getElementById('leaderboard');
+    leaderboard.style.fontSize = '24px';
+    leaderboard.style.fontWeight = 'bold';
+    leaderboard.style.textAlign = 'center';
+    players.forEach(player => {
+        const playerElement = document.createElement('div');
+        playerElement.style.fontSize = '18px';
+        playerElement.style.margin = '10px';
+        playerElement.textContent = `${player.name}: ${player.points} points`;
+        leaderboard.appendChild(playerElement);
+    });
+    setTimeout(() => {
+        location.reload();
+    }, 10000);
 });
 
 function updatePlayerCount(players) {
@@ -74,20 +121,22 @@ function displayTable(table) {
                 cardClicked(i, j, cellElement);
             });
             if (j === 5) {
-                cellElement.classList.add('red-outline');
-                cellElement.classList.add('shadow-card');
+                cellElement.classList.add('red-outline', 'shadow-card');
             } else if (j > 0) {
                 cellElement.classList.add('shadow-card');
             }
-            if (j === 0 && table[i]) {
-                cellElement.innerHTML = `<div class="card-number">${table[i][0].card}</div><div class="card-value">${table[i][0].bullheads}</div>`;
+            // Check if there is a card in the current position
+            if (table[i] && table[i][j]) {
+                const card = table[i][j];
+                cellElement.classList.remove('shadow-card');
+                cellElement.innerHTML = `<div class="card-number">${card.card}</div><div class="card-value">${card.bullheads}</div>`;
             }
-            row.push(cellElement)
+            row.push(cellElement);
             tableContainer.appendChild(cellElement);
         }
-        dTable.push(row)
+        dTable.push(row);
     }
-    console.log(dTable)
+    console.log(dTable);
 }
 
 function selectCard(cardElement, card) {
@@ -95,7 +144,8 @@ function selectCard(cardElement, card) {
     if (selectedCardElement) {
         console.log('A card is already selected, do nothing');
         return; // A card is already selected, do nothing
-    }
+    };
+    selectedCardCard = card;
     selectedCardElement = cardElement;
     cardElement.classList.add('selected-card');
     disableOtherCards(cardElement);
@@ -115,6 +165,14 @@ function disableOtherCards(selectedCardElement) {
 
 function cardClicked(row, col, cellElement) {
     console.log(`Card clicked at row ${row}, col ${col}, cellElement`, cellElement);
+    if (click_on == cellElement) {
+        socket.emit('cardPlaced', row, col);
+        cellElement.classList.remove('yellow-outline');
+    }
+    if (chooseRow) {
+        socket.emit('rowSelected', row);
+        chooseRow = false;
+    }
 }
 
 function enableAllCards() {
