@@ -1,4 +1,7 @@
 const socket = io();
+let selectedCardElement = null;
+let dTable = []
+
 
 document.getElementById('submitNameButton').addEventListener('click', () => {
     const nameInput = document.getElementById('nameInput').value;
@@ -62,7 +65,9 @@ function displayHand(hand) {
 function displayTable(table) {
     const tableContainer = document.getElementById('table');
     tableContainer.innerHTML = '';
+    dTable = []
     for (let i = 0; i < 4; i++) {
+        row = []
         for (let j = 0; j < 6; j++) {
             const cellElement = document.createElement('li');
             cellElement.addEventListener('click', () => {
@@ -77,13 +82,13 @@ function displayTable(table) {
             if (j === 0 && table[i]) {
                 cellElement.innerHTML = `<div class="card-number">${table[i][0].card}</div><div class="card-value">${table[i][0].bullheads}</div>`;
             }
-            
+            row.push(cellElement)
             tableContainer.appendChild(cellElement);
         }
+        dTable.push(row)
     }
+    console.log(dTable)
 }
-
-let selectedCardElement = null;
 
 function selectCard(cardElement, card) {
     console.log('Card selected:', card);
@@ -111,7 +116,6 @@ function disableOtherCards(selectedCardElement) {
 function cardClicked(row, col, cellElement) {
     console.log(`Card clicked at row ${row}, col ${col}, cellElement`, cellElement);
 }
-
 
 function enableAllCards() {
     const handContainer = document.getElementById('playerHand');

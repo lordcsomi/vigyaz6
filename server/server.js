@@ -26,6 +26,7 @@ server.listen(PORT, () => {
 // ------------------
 const numPlayers = 2;
 const cardsPerPlayer = 10;
+const numRows = 4;
 let players = [];
 let gameStarted = false;
 
@@ -34,15 +35,15 @@ let gameStarted = false;
 // Socket
 // ------------------
 io.on('connection', (socket) => {
-    console.log('A user connected');
 
     socket.on('submitName', (name) => {
-        console.log(`Player name submitted: ${name}`);
+        console.log(`Player ${socket.id} set name: ${name}`);
         if (players.length < numPlayers) {
             players.push({ id: socket.id, name });
             socket.emit('nameAccepted', { success: true, players });
 
             if (players.length === numPlayers && !gameStarted) {
+                console.log('Game starting with players:', players);
                 startGame();
             }
         } else {
@@ -50,6 +51,8 @@ io.on('connection', (socket) => {
         }
         io.emit('playerUpdate', players);
     });
+
+    
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
@@ -62,14 +65,16 @@ function startGame() {
     const cards = CardGenerator.generateCards();
     CardGenerator.shuffleCards(cards);
     const hands = CardGenerator.dealCards(cards, numPlayers, cardsPerPlayer);
-    const numRows = 4;
     const table = CardGenerator.setupTable(cards, numRows);
+    console.log(table);
 
     players.forEach((player, index) => {
         io.to(player.id).emit('gameStart', { hand: hands[index], table, players });
+        console.log(`Player ${player.name} has hand:`, hands[index]);
     });
 
     gameStarted = true;
+    console.log()
 }
 
 
