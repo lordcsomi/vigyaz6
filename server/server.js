@@ -24,7 +24,7 @@ server.listen(PORT, () => {
 // ------------------
 // Game setup
 // ------------------
-const numPlayers = 4;
+const numPlayers = 2;
 const cardsPerPlayer = 10;
 const numRows = 4;
 let round = 0;
@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
         if (players.length < numPlayers) {
             players.push({ id: socket.id, name });
             playerPoints.push({ id: socket.id, name: name, points: 0 });
-            socket.emit('nameAccepted', { success: true, players });
+            socket.emit('nameAccepted', { success: true, players, socketId: socket.id });
 
             if (players.length === numPlayers && !gameStarted) {
                 console.log('Game starting with players:', players);
@@ -62,11 +62,48 @@ io.on('connection', (socket) => {
         io.emit('playerUpdate', players);
     });
 
+    socket.on('reconnect', (cookie) => {
+        console.log(`Player ${cookie}  try reconnecting`);
+        const player = players.find(player => player.id === cookie);
+        if (player) {
+            const playerIndex = players.findIndex(player => player.id === cookie);
+            if (playerIndex !== -1) {
+                players[playerIndex].id = socket.id;
+                playerPoints[playerIndex].id = socket.id;
+                console.log(`---- Player ${players[playerIndex].name} reconnected with new socket id: ${socket.id} ----`);
+                socket.emit('reconnected', { success: true, message: 'Reconnected', state: gameStarted });
+                socket.emit('nameAccepted', { success: true, players, socketId: socket.id });
+                if (gameStarted) {
+
+                    socket.emit('gameStart', { hand: hands[playerIndex], table, players });
+                    socket.emit('updateTable', table);
+
+                    if (state === 'waitingForCards') {
+                        socket.emit('new_card_can_be_selected');
+                    }
+                    if (state === 'playerTurn') {
+                        handlePlayer();
+                    }
+                }
+            } else {
+                console.log(`Player ${cookie} reconnection failed`);
+                socket.emit('reconnected', { success: false, message: 'Invalid cookie' });
+            }
+            
+            
+        } else {
+            console.log(`Player ${cookie} reconnection failed`);
+            socket.emit('reconnected', { success: false, message: 'Invalid cookie' });
+        }
+    });
+
     socket.on('cardSelected', (card) => {
         console.log(`Player ${socket.id} selected card:`, card);
         if (gameStarted && state === 'waitingForCards') {
             const currentPlayer = players.find(player => player.id === socket.id);
-            playerCards.push({ player: currentPlayer, card });
+            if (!playerCards.some(pc => pc.player.id === currentPlayer.id)) {
+                playerCards.push({ player: currentPlayer, card });
+            }
             if (playerCards.length === numPlayers) {
                 console.log('All players have selected cards:');
                 startRound();
@@ -91,23 +128,9 @@ io.on('connection', (socket) => {
                 console.log(`Player ${socket.id} placed card in row ${row} column ${col}`);
             }
             
+            removeCardFromHand(currentWaitingCard.card);
+            nextPlayer();
 
-            io.emit('updateTable', table);
-            currentPlayer++;
-            if (currentPlayer === numPlayers) {
-                currentPlayer = 0;
-                state = 'waitingForCards';
-                playerCards = [];
-                round++;
-                if (round === 10) {
-                    gameOver();
-                    return;
-                }
-                io.emit('new_card_can_be_selected');
-            }
-            if (state === 'playerTurn') {
-                handlePlayer();
-            }
         }
 
     });
@@ -121,29 +144,14 @@ io.on('connection', (socket) => {
             playerPoints.find(player => player.id === socket.id).points += bullheads;
             table[row] = [];
             table[row].push(currentWaitingCard);
-            io.emit('updateTable', table);
-            currentPlayer++;
-            if (currentPlayer === numPlayers) {
-                currentPlayer = 0;
-                state = 'waitingForCards';
-                playerCards = [];
-                round++;
-                if (round === 10) {
-                    gameOver();
-                    return
-                }
-                io.emit('new_card_can_be_selected');
-            }
-            if (state === 'playerTurn') {
-                handlePlayer();
-            }
+
+            removeCardFromHand(currentWaitingCard.card);
+            nextPlayer();
         }
     });
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
-        players = players.filter(player => player.id !== socket.id);
-        io.emit('playerUpdate', players);
     });
 });
 
@@ -236,4 +244,30 @@ function gameOver() {
         currentWaitingCard = null;
 
     }, 10000);
+}
+
+function removeCardFromHand(card) {
+    hands[currentPlayer].splice(hands[currentPlayer].findIndex(c => c.card === card), 1);
+}
+
+function nextPlayer() {
+
+    io.emit('updateTable', table);
+
+    currentPlayer++;
+    if (currentPlayer === numPlayers) {
+        currentPlayer = 0;
+        state = 'waitingForCards';
+        playerCards = [];
+        round++;
+        if (round === 10) {
+            gameOver();
+            return
+        }
+        io.emit('new_card_can_be_selected');
+        
+    }
+    if (state === 'playerTurn') {
+        handlePlayer();
+    }
 }

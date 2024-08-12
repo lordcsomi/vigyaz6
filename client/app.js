@@ -16,18 +16,45 @@ document.getElementById('submitNameButton').addEventListener('click', () => {
 
 socket.on('connect', () => {
     console.log('Connected to server');
+    const socketId = getCookie('socketId');
+    if (socketId) {
+        console.log('Found cookie:', socketId);
+        socket.emit('reconnect', socketId);
+    } else {
+        console.log('No cookie found');
+    }
 });
 
 socket.on('disconnect', () => {
     console.log('Disconnected from server');
+    document.cookie = 'socketId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     location.reload();
     
 });
 
-socket.on('nameAccepted', ({ success, players }) => {
+socket.on('reconnected', ({ success, message, state }) => {
+    if (success) {
+        console.log('Reconnected, state:', state);
+        if (state == false) {
+            document.getElementById('nameInputContainer').style.display = 'none';
+            document.getElementById('waitingMessageContainer').style.display = 'block';
+        } else if (state == 'gameStarted') {
+            document.getElementById('gameContainer').style.display = 'block';
+        } else if (state == true) {
+            document.getElementById('gameContainer').style.display = 'block';
+        }
+    } else {
+        alert(message);
+    }
+});
+
+socket.on('nameAccepted', ({ success, players, socketId }) => {
     if (success) {
         document.getElementById('nameInputContainer').style.display = 'none';
         document.getElementById('waitingMessageContainer').style.display = 'block';
+        console.log('mycookie', socketId);
+        document.cookie = `socketId=${socketId}; max-age=3600`;
+
         updatePlayerCount(players);
     } else {
         alert('Game is full.');
@@ -87,9 +114,17 @@ socket.on('gameOver', (players) => {
         playerElement.textContent = `${player.name}: ${player.points} points`;
         leaderboard.appendChild(playerElement);
     });
+    document.cookie = 'socketId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
     setTimeout(() => {
         location.reload();
     }, 10000);
+});
+
+socket.on('updateHand', (hand) => {
+    console.log('Updating hand:', hand);
+    myhand = hand
+    displayHand(myhand);
 });
 
 function updatePlayerCount(players) {
@@ -99,6 +134,7 @@ function updatePlayerCount(players) {
 function displayHand(hand) {
     const handContainer = document.getElementById('playerHand');
     handContainer.innerHTML = '';
+    myhand.sort((a, b) => a.card - b.card);
     hand.forEach(card => {
         const cardElement = document.createElement('li');
         cardElement.innerHTML = `<div class="card-number">${card.card}</div><div class="card-value">${card.bullheads}</div>`;
@@ -186,4 +222,16 @@ function enableAllCards() {
         selectedCardElement.classList.remove('selected-card');
         selectedCardElement = null;
     }
+}
+
+function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        const [cookieName, cookieValue] = cookie.split('=');
+        if (cookieName === name) {
+            return cookieValue;
+        }
+    }
+    return null;
 }
