@@ -74,7 +74,7 @@ body {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     grid-gap: 5px;
-    margin: 20px 0;
+    margin: 0;
     width: 100%;
     max-width: 600px;
 }
@@ -174,4 +174,19 @@ li {
 .yellow-outline {
     border: 3px solid yellow;
     background-color: #f9f9f9;
+}
+
+#stateMessageContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    padding: 0;
+    min-width: 200px;
+}
+
+#stateMessageContainer p {
+    padding: 0px;
+    margin: 0px;
 }

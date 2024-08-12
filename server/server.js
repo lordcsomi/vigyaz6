@@ -166,6 +166,7 @@ function startGame() {
         io.to(player.id).emit('gameStart', { hand: hands[index], table, players });
         console.log(`Player ${player.name} has hand:`, hands[index]);
     });
+    io.emit('stateMessage', 'Waiting for players to select cards');
 
     gameStarted = true;
     console.log()
@@ -190,12 +191,14 @@ function handlePlayer() {
         waitingForPlayer = playerCards[currentPlayer].player.id;
         currentWaitingCard = playerCards[currentPlayer].card;
         io.to(playerCards[currentPlayer].player.id).emit('chooseRow', table);
+        io.emit('stateMessage', `Waiting for ${playerCards[currentPlayer].player.name} to choose a row`);
         console.log(`Waiting for ${playerCards[currentPlayer].player.name} to choose a row`);
     } else {
         const closestRow = calcCardPlace();
         waitingForPlayer = playerCards[currentPlayer].player.id;
         currentWaitingCard = playerCards[currentPlayer].card;
         io.to(playerCards[currentPlayer].player.id).emit('placeCard', table, closestRow, table[closestRow].length);
+        io.emit('stateMessage', `Waiting for ${playerCards[currentPlayer].player.name} to place the card`);
         console.log(`Waiting for ${playerCards[currentPlayer].player.name} to place the card`);
     }
 }
@@ -264,6 +267,7 @@ function nextPlayer() {
             gameOver();
             return
         }
+        io.emit('stateMessage', 'Waiting for players to select cards');
         io.emit('new_card_can_be_selected');
         
     }

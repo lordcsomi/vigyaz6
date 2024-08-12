@@ -127,6 +127,11 @@ socket.on('updateHand', (hand) => {
     displayHand(myhand);
 });
 
+socket.on('stateMessage', (message) => {
+    console.log('State message:', message);
+    document.getElementById('stateMessage').textContent = message;
+});
+
 function updatePlayerCount(players) {
     document.getElementById('playerCount').textContent = `${players.length}/4 players`;
 }
